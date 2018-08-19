@@ -301,3 +301,6 @@ __pycache__/
 src/Content
 
 /.gtm/
+
+# 'Local' config files
+epm-api/appsettings.Development.json

@@ -18,7 +18,7 @@ namespace epm_api.Controllers
         }
 
         [HttpGet]
-        [Route(template: "{packageName}/latest")]
+        [Route(template: "{packageName}")]
         [Produces("application/json")]
         public async Task<IActionResult> Get([FromRoute] string packageName)
         {

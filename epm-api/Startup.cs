@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Amazon.S3;
 using epm_api.Services;
+using epm_api.Services.Interfaces;
 
 namespace epm_api
 {
@@ -39,6 +40,8 @@ namespace epm_api
             });
 
             services.AddSingleton<IS3Service, S3Service>();
+            services.AddSingleton<IPackageService, PackageService>();
+            services.AddSingleton<IVersionService, VersionService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
             services.AddAWSService<IAmazonS3>();
         }

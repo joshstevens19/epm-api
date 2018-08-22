@@ -7,13 +7,6 @@ namespace epm_api.Controllers
     [ApiController]
     public class PingController : ControllerBase
     {
-        private readonly IS3Service _client;
-
-        public PingController(IS3Service client)
-        {
-            this._client = client;
-        }
-
         [HttpGet]
         [Route(template: "")]
         public IActionResult Get()

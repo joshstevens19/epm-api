@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using epm_api.Models;
 using epm_api.Services;
+using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace epm_api.Controllers
@@ -10,11 +11,13 @@ namespace epm_api.Controllers
     [ApiController]
     public class PackagesController : ControllerBase
     {
-        private readonly IS3Service _client;
+        private readonly IPackageService _packageService;
+        private readonly IVersionService _versionService;
 
-        public PackagesController(IS3Service client)
+        public PackagesController(IPackageService packageService, IVersionService versionService)
         {
-            this._client = client;
+            this._packageService = packageService;
+            this._versionService = versionService;
         }
 
         [HttpGet]
@@ -22,9 +25,9 @@ namespace epm_api.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> Get([FromRoute] string packageName)
         {
-            string latestVersion = await this._client.GetLatestVersionOfPackge(packageName);
+            string latestVersion = await this._versionService.GetLatestVersionOfPackge(packageName);
 
-            IReadOnlyCollection<PackageFile> packageFiles = await this._client.GetPackageFiles(packageName, latestVersion);
+            IReadOnlyCollection<PackageFile> packageFiles = await this._packageService.GetPackageFiles(packageName, latestVersion);
 
             return this.Ok(packageFiles);
         }

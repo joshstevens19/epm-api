@@ -1,5 +1,6 @@
 ﻿using System.Threading.Tasks;
 using epm_api.Services;
+using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace epm_api.Controllers
@@ -8,11 +9,11 @@ namespace epm_api.Controllers
     [ApiController]
     public class VersionsController : ControllerBase
     {
-        private readonly IS3Service _client;
+        private readonly IVersionService _versionService;
 
-        public VersionsController(IS3Service client)
+        public VersionsController(IVersionService versionService)
         {
-           this._client = client;
+           this._versionService = versionService;
         }
 
         [HttpGet]
@@ -20,7 +21,7 @@ namespace epm_api.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> Get([FromRoute] string packageName)
         {
-            string latestVersion = await this._client.GetLatestVersionOfPackge(packageName);
+            string latestVersion = await this._versionService.GetLatestVersionOfPackge(packageName);
 
             if (latestVersion == null)
             {

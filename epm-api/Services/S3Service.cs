@@ -1,6 +1,7 @@
 ﻿using Amazon.S3;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Amazon.S3.Model;
@@ -12,6 +13,7 @@ namespace epm_api.Services
     public class S3Service : IS3Service
     {
         private readonly IAmazonS3 _client;
+        private readonly string _bucketNames = "ethereumpackagemanager";
 
         // will keep injection in for now - will remove if it stays like this forever 
         public S3Service(IAmazonS3 client)
@@ -25,13 +27,13 @@ namespace epm_api.Services
         /// <summary>
         /// Gets the latest version of a package
         /// </summary>
-        /// <param name="packageName"></param>
+        /// <param name="packageName">The package name</param>
         /// <returns></returns>
         public async Task<string> GetLatestVersionOfPackge(string packageName)
         {
             ListObjectsRequest request = new ListObjectsRequest
             {
-                BucketName = "ethereumpackagemanager",
+                BucketName = this._bucketNames,
                 Prefix = packageName + "/latestversion"
             };
 
@@ -40,40 +42,68 @@ namespace epm_api.Services
             return versionDetails?.Key.Split('@')[1];
         }
 
-        public async Task<IReadOnlyCollection<PackageFile>> GetPackageFilesDetails(string packageName, string version)
+        /// <summary>
+        /// Gets all the package files from s3
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="version">The version requested</param>
+        /// <returns>A read only collection of package files</returns>
+        public async Task<IReadOnlyCollection<PackageFile>> GetPackageFiles(string packageName, string version)
         {
             IList<PackageFile> files = new List<PackageFile>();
 
-            ListObjectsRequest request = new ListObjectsRequest
-            {
-                BucketName = "ethereumpackagemanager",
-                Prefix = packageName + "/" + version
-            };
+            ListObjectsV2Response packageFilesResponse;
 
-            ListObjectsResponse response;
-
-            string s3Endpoint = "https://s3.amazonaws.com/ethereumpackagemanager/";
+            string prefix = $"{packageName}/{version}/";
 
             do
             {
-                // Get a list of objects
-                response = await this._client.ListObjectsAsync(request);
-                foreach (S3Object file in response.S3Objects)
+                ListObjectsV2Request requestPackages = new ListObjectsV2Request()
                 {
-                    string locationInPackage = file.Key.Replace(packageName + "/" + version + "/", "");
+                    BucketName = this._bucketNames,
+                    Prefix = prefix
+                };
 
-                    if (locationInPackage.Length > 0)
+                packageFilesResponse = await this._client.ListObjectsV2Async(requestPackages);
+                foreach (S3Object entry in packageFilesResponse.S3Objects)
+                {
+                    if (entry.Key != prefix)
                     {
-                        Uri fileUrl = new Uri(s3Endpoint + file.Key);
-                        files.Add(new PackageFile(fileUrl, locationInPackage));
+                        GetObjectRequest request = new GetObjectRequest
+                        {
+                            BucketName = entry.BucketName,
+                            Key = entry.Key
+                        };
+
+                        using (var response = await this._client.GetObjectAsync(request))
+                        {
+                            using (var responseStream = response.ResponseStream)
+                            {
+                                using (var reader = new StreamReader(responseStream))
+                                {
+                                    string name = this.ParsePackageFileName(prefix, entry.Key);
+                                    string responseContent = reader.ReadToEnd();
+
+                                    files.Add(new PackageFile(name, responseContent));
+                                }
+                            }
+                        }
                     }
                 }
-
-                // Set the marker property
-                request.Marker = response.NextMarker;
-            } while (response.IsTruncated);
+            } while (packageFilesResponse.IsTruncated);
 
             return (IReadOnlyCollection<PackageFile>)files;
+        }
+
+        /// <summary>
+        /// Parses the package location name into a proper file name 
+        /// </summary>
+        /// <param name="prefix">The s3 prefix the request has sent</param>
+        /// <param name="key">The key of a entry returned from s3</param>
+        /// <returns></returns>
+        private string ParsePackageFileName(string prefix, string key)
+        {
+            return key.Replace(prefix, "");
         }
     }
 }

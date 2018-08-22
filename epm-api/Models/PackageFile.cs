@@ -7,15 +7,14 @@ namespace epm_api.Models
 {
     public class PackageFile
     {
-        public Uri FileUrl { get; set; }
-        public string LocationInPackage { get; set; }
-
-        public PackageFile() { }
-
-        public PackageFile(Uri fileUrl, string locationInPackage)
+        public PackageFile(string fileName, string fileContent)
         {
-            this.FileUrl = fileUrl;
-            this.LocationInPackage = locationInPackage;
+            FileName = fileName;
+            FileContent = fileContent;
         }
+
+        public string FileName { get; set; }
+
+        public string FileContent { get; set; }
     }
 }

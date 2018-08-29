@@ -9,7 +9,7 @@ namespace epm_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PackagesController : ControllerBase
+    public class PackagesController : BaseApiController
     {
         private readonly IPackageService _packageService;
         private readonly IVersionService _versionService;

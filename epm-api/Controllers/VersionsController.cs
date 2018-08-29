@@ -7,7 +7,7 @@ namespace epm_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class VersionsController : ControllerBase
+    public class VersionsController : BaseApiController
     {
         private readonly IVersionService _versionService;
 

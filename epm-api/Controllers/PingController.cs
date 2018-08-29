@@ -5,7 +5,7 @@ namespace epm_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class PingController : ControllerBase
+    public class PingController : BaseApiController
     {
         [HttpGet]
         [Route(template: "")]

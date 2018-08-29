@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -7,11 +8,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Amazon.S3;
 using epm_api.Services;
 using epm_api.Services.Interfaces;
+using Microsoft.IdentityModel.Tokens;
 
 namespace epm_api
 {
     public class Startup
     {
+        private IConfiguration Configuration { get; }
+
         public Startup(IHostingEnvironment env)
         {
             var builder = new ConfigurationBuilder()
@@ -22,24 +26,28 @@ namespace epm_api
             Configuration = builder.Build();
         }
 
-        public IConfiguration Configuration { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(o =>
-            {
-                o.Authority = "http://localhost:49936";
-                o.Audience = "apiApp";
-                o.RequireHttpsMetadata = false;
-            });
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = "yourdomain.com",
+                        ValidAudience = "yourdomain.com",
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecurityKey"]))
+                    };
+                });
 
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<IS3Service, S3Service>();
+            services.AddSingleton<IJwtService, JwtService>();
+            services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IPackageService, PackageService>();
             services.AddSingleton<IVersionService, VersionService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
@@ -58,14 +66,9 @@ namespace epm_api
                 app.UseHsts();
             }
 
-            ////add this configuration for the middleware needed to validate the tokens
-            //app.UseAuthentication();
-
-            ////add this line to show the ERROR STATUS CODES
-            //app.UseStatusCodePages();
-
-            //app.UseHttpsRedirection();
+            app.UseAuthentication();
             app.UseMvc();
+            app.UseStaticFiles();
         }
     }
 }

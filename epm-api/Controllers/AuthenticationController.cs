@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Threading.Tasks;
+using epm_api.Dtos;
 using epm_api.Services;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -37,21 +38,20 @@ namespace epm_api.Controllers
         /// <returns></returns>
         [Route(template: "login")]
         [ProducesResponseType((int) HttpStatusCode.OK)]
-        public async Task<IActionResult> Post()
+        public async Task<IActionResult> Post([FromBody] LoginRequestDto loginRequestDto)
         {
-            // pass it through body later on
-            const string username = "test";
-            const string password = "testme2";
-            const int expiryMinutes = 20;
-
-            if (await this._authenticationService.Login(username, password))
+            int expiryMinutes = 30;
+            if (loginRequestDto.ExpiryMinutes.HasValue)
             {
-                string jwtToken = this._jwtService.GenerateToken(username, expiryMinutes);
-                return this.Ok(jwtToken);
+                expiryMinutes = loginRequestDto.ExpiryMinutes.Value;
             }
 
-            return this.BadRequest();
+            if (!await this._authenticationService.Login(loginRequestDto.Username, loginRequestDto.Password))
+                return this.BadRequest();
 
+            string jwtToken = this._jwtService.GenerateToken(loginRequestDto.Username, expiryMinutes);
+
+            return this.Ok(jwtToken);
         }
 
         [Route(template: "logout")]

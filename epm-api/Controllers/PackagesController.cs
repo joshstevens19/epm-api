@@ -27,7 +27,7 @@ namespace epm_api.Controllers
         {
             string latestVersion = await this._versionService.GetLatestVersionOfPackge(packageName);
 
-            IReadOnlyCollection<PackageFile> packageFiles = await this._packageService.GetPackageFiles(packageName, latestVersion);
+            PackageFiles packageFiles = await this._packageService.GetPackageFiles(packageName, latestVersion);
 
             return this.Ok(packageFiles);
         }

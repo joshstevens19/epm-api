@@ -9,8 +9,8 @@ namespace epm_api.Models
     {
         public PackageFile(string fileName, string fileContent)
         {
-            FileName = fileName;
-            FileContent = fileContent;
+            this.FileName = fileName;
+            this.FileContent = fileContent;
         }
 
         public string FileName { get; set; }

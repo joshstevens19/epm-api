@@ -11,12 +11,12 @@ namespace epm_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthenicationController : ApiController
+    public class AuthenticationController : ApiController
     {
         private readonly IJwtService _jwtService;
         private readonly IAuthenticationService _authenticationService;
 
-        public AuthenicationController(IJwtService jwtService, IAuthenticationService authenticationService)
+        public AuthenticationController(IJwtService jwtService, IAuthenticationService authenticationService)
         {
             this._jwtService = jwtService;
             this._authenticationService = authenticationService;

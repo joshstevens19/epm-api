@@ -1,6 +1,8 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Threading.Tasks;
 using epm_api.Dtos;
+using epm_api.Models;
 using epm_api.Services;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -50,8 +52,9 @@ namespace epm_api.Controllers
                 return this.BadRequest();
 
             string jwtToken = this._jwtService.GenerateToken(loginRequestDto.Username, expiryMinutes);
+            DateTime expiryDate = DateTime.Now.AddMinutes(expiryMinutes);
 
-            return this.Ok(jwtToken);
+            return this.Ok(new JwtDetails(jwtToken, expiryDate));
         }
 
         [Route(template: "logout")]

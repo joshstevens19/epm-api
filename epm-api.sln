@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "epm-api", "epm-api\epm-api.csproj", "{B4FD3B88-3DFC-480F-ADA3-0EB6469E7A69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "epmApiTests", "epmApiTests\epmApiTests.csproj", "{5FF0819F-6742-4B24-A04D-9740562C9B95}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,6 +20,12 @@ Global
 		{B4FD3B88-3DFC-480F-ADA3-0EB6469E7A69}.Development|Any CPU.Build.0 = Development|Any CPU
 		{B4FD3B88-3DFC-480F-ADA3-0EB6469E7A69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4FD3B88-3DFC-480F-ADA3-0EB6469E7A69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Development|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Development|Any CPU.Build.0 = Debug|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FF0819F-6742-4B24-A04D-9740562C9B95}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

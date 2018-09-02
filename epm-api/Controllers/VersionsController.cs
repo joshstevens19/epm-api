@@ -21,7 +21,7 @@ namespace epm_api.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> Get([FromRoute] string packageName)
         {
-            string latestVersion = await this._versionService.GetLatestVersionOfPackge(packageName);
+            string latestVersion = await this._versionService.GetLatestVersionOfPackgeAsync(packageName);
 
             if (latestVersion == null)
             {

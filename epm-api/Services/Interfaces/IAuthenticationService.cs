@@ -4,6 +4,6 @@ namespace epm_api.Services.Interfaces
 {
     public interface IAuthenticationService
     {
-        Task<bool> Login(string username, string password);
+        Task<bool> LoginAsync(string username, string password);
     }
 }

@@ -27,7 +27,7 @@ namespace epm_api.Services
         /// <param name="packageName">The package name</param>
         /// <param name="version">The version requested</param>
         /// <returns>A read only collection of package files</returns>
-        public async Task<PackageFiles> GetPackageFiles(string packageName, string version)
+        public async Task<PackageFiles> GetPackageFilesAsync(string packageName, string version)
         {
             IList<PackageFile> files = new List<PackageFile>();
 

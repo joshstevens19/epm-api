@@ -6,6 +6,6 @@ namespace epm_api.Services.Interfaces
 {
     public interface IVersionService
     {
-        Task<string> GetLatestVersionOfPackge(string packageName);
+        Task<string> GetLatestVersionOfPackgeAsync(string packageName);
     }
 }

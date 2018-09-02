@@ -48,7 +48,7 @@ namespace epm_api.Controllers
                 expiryMinutes = loginRequestDto.ExpiryMinutes.Value;
             }
 
-            if (!await this._authenticationService.Login(loginRequestDto.Username, loginRequestDto.Password))
+            if (!await this._authenticationService.LoginAsync(loginRequestDto.Username, loginRequestDto.Password))
                 return this.BadRequest();
 
             string jwtToken = this._jwtService.GenerateToken(loginRequestDto.Username, expiryMinutes);

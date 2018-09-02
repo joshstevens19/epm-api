@@ -6,6 +6,6 @@ namespace epm_api.Services.Interfaces
 {
     public interface IPackageService
     {
-        Task<PackageFiles> GetPackageFiles(string packageName, string version);
+        Task<PackageFiles> GetPackageFilesAsync(string packageName, string version);
     }
 }

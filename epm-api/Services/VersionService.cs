@@ -24,7 +24,7 @@ namespace epm_api.Services
         /// </summary>
         /// <param name="packageName">The package name</param>
         /// <returns></returns>
-        public async Task<string> GetLatestVersionOfPackge(string packageName)
+        public async Task<string> GetLatestVersionOfPackgeAsync(string packageName)
         {
             ListObjectsRequest request = new ListObjectsRequest
             {

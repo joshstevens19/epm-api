@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using epm_api.Entities;
 using epm_api.Enums;
 using epm_api.Extentions;
 using epm_api.Services.Interfaces;
@@ -32,6 +34,11 @@ namespace epm_api.Services
             return Table.LoadTable(this.GetClient(), table.DisplayName());
         }
 
+        public async Task PutItemAsync<T>(T entity)
+        {
+            await this._context.SaveAsync(entity);
+        }
+
         public async Task<Document> PutItemAsync(DynamoDbTablesEnum dynamoDbtable,
                                                  Document document)
         {
@@ -46,6 +53,11 @@ namespace epm_api.Services
             return await table.PutItemAsync(document, null);
         }
 
+        public async Task<T> GetItemAsync<T>(Primitive primaryKey)
+        {
+            return await this._context.LoadAsync<T>(primaryKey);
+        }
+
         public async Task<Document> GetItemAsync(DynamoDbTablesEnum dynamoDbTable,
                                                  Primitive primaryKey)
         {
@@ -58,6 +70,11 @@ namespace epm_api.Services
         {
             Table table = this.LoadTable(dynamoDbTable);
             return await table.GetItemAsync(primaryKey, config);
+        }
+
+        public async Task DeleteItemAsync<T>(Primitive primaryKey)
+        {
+            await this._context.DeleteAsync<T>(primaryKey);
         }
 
         public async Task<Document> DeleteItemAsync(DynamoDbTablesEnum dynamoDbTable,

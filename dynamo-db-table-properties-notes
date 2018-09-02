@@ -41,3 +41,6 @@ Teams Table
 - Private - bool - not null 
           - teams can be public as well as private 
           - if teams are public it will show members of the team on the UI etc
+          
+          
+If anymore tables are required mock them out here...

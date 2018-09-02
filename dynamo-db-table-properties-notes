@@ -1,0 +1,12 @@
+Remember it is a NOSQL table so no relational, data has to be structured to be fast and easy.
+I would rather have repeated data in it rather then doing 2 lookups, we take the hit on the update of the data
+which will have to perform to queries but we know gets will be used more then puts. 
+
+Users Table
+
+- EmailAddress - PK - string - not null
+- Password - string - think about encrypting this later - not null
+- FirstName - string - not null
+- LastName - string - not null
+- Introduction - string
+- ..... think of more

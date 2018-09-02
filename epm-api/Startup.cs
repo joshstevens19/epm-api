@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -46,12 +47,14 @@ namespace epm_api
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
             services.AddSingleton<IS3Service, S3Service>();
+            services.AddSingleton<IDynamoDbService, DynamoDbService>();
             services.AddSingleton<IJwtService, JwtService>();
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IPackageService, PackageService>();
             services.AddSingleton<IVersionService, VersionService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
             services.AddAWSService<IAmazonS3>();
+            services.AddAWSService<IAmazonDynamoDB>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

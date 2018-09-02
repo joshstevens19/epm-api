@@ -1,6 +1,6 @@
 Remember it is a NOSQL table so no relational, data has to be structured to be fast and easy.
 I would rather have repeated data in it rather then doing 2 lookups, we take the hit on the update of the data
-which will have to perform to queries but we know gets will be used more then puts. 
+which will have to perform more then 1 queries but we know gets will be used more then puts. 
 
 Users Table
 
@@ -9,4 +9,35 @@ Users Table
 - FirstName - string - not null
 - LastName - string - not null
 - Introduction - string
+- CreatedOn - Date - not null 
+- UpdatedOn - Date 
+- Teams - List of team primary keys 
+- TeamsOwner - List of teams this user is the owner of
+- Packages - List of packages details primary keys 
+- Stars - List of packages details primary key that theu have starred
+- Blocked - if the user has been blocked by us for some reason 
 - ..... think of more
+
+PackageDetails Table
+
+- PackageName - PK - string - not null
+- Versions - List of versions - not null
+- Private - bool - not null
+- Team - string - team primiary key will be null if not linked to a team
+- Owner - Users Table PK - not null 
+        - This will always be populated with a email address 
+- LatestVersion - string - latest version of the package which is downloadable - not null
+- GitHub link - string 
+- ... think of more 
+
+Teams Table 
+
+- TeamName - PK - string - not null 
+- Users - list of PK User Details Table - not null 
+- Admins - list of PK user details table - not null 
+         - these people can add new team members, delete team members and upgrade packages
+- logo - image URL (save on s3)
+- Packages - List of packages details primary keys
+- Private - bool - not null 
+          - teams can be public as well as private 
+          - if teams are public it will show members of the team on the UI etc

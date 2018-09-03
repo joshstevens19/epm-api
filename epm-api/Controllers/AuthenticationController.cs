@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using epm_api.Dtos;
+using epm_api.Dtos.Extentions;
 using epm_api.Models;
 using epm_api.Services;
 using epm_api.Services.Interfaces;
@@ -48,10 +49,14 @@ namespace epm_api.Controllers
                 expiryMinutes = loginRequestDto.ExpiryMinutes.Value;
             }
 
-            if (!await this._authenticationService.LoginAsync(loginRequestDto.Username, loginRequestDto.Password))
-                return this.BadRequest();
+            UsersEntity user = await this._authenticationService.LoginAsync(loginRequestDto.Username, loginRequestDto.Password);
 
-            string jwtToken = this._jwtService.GenerateToken(loginRequestDto.Username, expiryMinutes);
+            if (user == null)
+            {
+                return this.BadRequest();
+            }
+
+            string jwtToken = this._jwtService.GenerateToken(user, expiryMinutes);
             DateTime expiryDate = DateTime.Now.AddMinutes(expiryMinutes);
 
             return this.Ok(new JwtDetails(jwtToken, expiryDate));
@@ -59,9 +64,26 @@ namespace epm_api.Controllers
 
         [Route(template: "logout")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult PostLogout()
+        public IActionResult Post()
         {
             return this.Ok();
+        }
+
+        [Route(template: "register")]
+        [ProducesResponseType((int) HttpStatusCode.OK)]
+        public async Task<IActionResult> PostRegister([FromBody] RegisterRequestDto registerRequestDto)
+        {
+            UsersEntity user = await this._authenticationService.RegisterAsync(registerRequestDto.ToEntity());
+            if (user == null)
+            {
+                return this.BadRequest();
+            }
+
+            const int expiryMinutes = 30;
+            string jwtToken = this._jwtService.GenerateToken(user, expiryMinutes);
+            DateTime expiryDate = DateTime.Now.AddMinutes(expiryMinutes);
+
+            return this.Ok(new JwtDetails(jwtToken, expiryDate));
         }
     }
 }

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace epm_api.Controllers
 {
     [Authorize]
-    public class AuthorizeApiController : Controller
+    public class AuthorizeApiController : ControllerBase
     {
 
     }

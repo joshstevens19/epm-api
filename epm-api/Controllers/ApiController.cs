@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace epm_api.Controllers
 {
-    public class ApiController : Controller
+    public class ApiController : ControllerBase
     {
 
     }

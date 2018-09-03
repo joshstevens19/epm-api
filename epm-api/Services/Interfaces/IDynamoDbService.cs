@@ -11,13 +11,13 @@ namespace epm_api.Services.Interfaces
     public interface IDynamoDbService
     {
         IAmazonDynamoDB GetClient();
-        Task PutItemAsync<T>(T entity);
+        Task<T> PutItemAsync<T>(T entity);
         Task<Document> PutItemAsync(DynamoDbTablesEnum dynamoDbtable, Document document);
         Task<Document> PutItemAsync(DynamoDbTablesEnum dynamoDbtable, Document document, PutItemOperationConfig config);
-        Task<T> GetItemAsync<T>(Primitive primaryKey);
+        Task<T> GetItemAsync<T>(string primaryKey);
         Task<Document> GetItemAsync(DynamoDbTablesEnum dynamoDbTable, Primitive primaryKey);
         Task<Document> GetItemAsync(DynamoDbTablesEnum dynamoDbTable, Primitive primaryKey, GetItemOperationConfig config);
-        Task DeleteItemAsync<T>(Primitive primaryKey)
+        Task DeleteItemAsync<T>(string primaryKey);
         Task<Document> DeleteItemAsync(DynamoDbTablesEnum dynamoDbTable, Primitive primaryKey);
         Task<Document> DeleteItemAsync(DynamoDbTablesEnum dynamoDbTable, Primitive primaryKey, DeleteItemOperationConfig config);
         Task<Document> UpdateItemAsync(DynamoDbTablesEnum dynamoDbTable, Document document);

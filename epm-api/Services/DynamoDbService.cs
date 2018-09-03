@@ -29,14 +29,26 @@ namespace epm_api.Services
             return this._client;
         }
 
+        /// <summary>
+        /// Loads the table
+        /// </summary>
+        /// <param name="table">The table which needs to be loaded</param>
+        /// <returns></returns>
         private Table LoadTable(DynamoDbTablesEnum table)
         {
             return Table.LoadTable(this.GetClient(), table.DisplayName());
         }
 
-        public async Task PutItemAsync<T>(T entity)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="entity"></param>
+        /// <returns></returns>
+        public async Task<T> PutItemAsync<T>(T entity)
         {
             await this._context.SaveAsync(entity);
+            return entity;
         }
 
         public async Task<Document> PutItemAsync(DynamoDbTablesEnum dynamoDbtable,
@@ -53,7 +65,7 @@ namespace epm_api.Services
             return await table.PutItemAsync(document, null);
         }
 
-        public async Task<T> GetItemAsync<T>(Primitive primaryKey)
+        public async Task<T> GetItemAsync<T>(string primaryKey)
         {
             return await this._context.LoadAsync<T>(primaryKey);
         }
@@ -72,7 +84,7 @@ namespace epm_api.Services
             return await table.GetItemAsync(primaryKey, config);
         }
 
-        public async Task DeleteItemAsync<T>(Primitive primaryKey)
+        public async Task DeleteItemAsync<T>(string primaryKey)
         {
             await this._context.DeleteAsync<T>(primaryKey);
         }

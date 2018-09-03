@@ -14,7 +14,7 @@ namespace epm_api.Models
         public string Password { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public Uri ProfilePicture { get; set; }
+        public string ProfilePicture { get; set; }
         public string Introduction { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime UpdatedOn { get; set; }

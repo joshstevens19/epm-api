@@ -21,6 +21,11 @@ namespace epm_api.Services
             this._client = this._s3Service.GetClient();
         }
 
+        public async Task UploadPackage(PackageFiles packageFiles)
+        {
+            // check this user is ok to 
+        }
+
         /// <summary>
         /// Gets all the package files from s3
         /// </summary>

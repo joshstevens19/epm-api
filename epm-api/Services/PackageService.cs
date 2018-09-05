@@ -5,6 +5,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using epm_api.Entities;
+using epm_api.Extentions;
 using epm_api.Models;
 using epm_api.Services.Interfaces;
 
@@ -13,17 +15,108 @@ namespace epm_api.Services
     public class PackageService : IPackageService
     {
         private readonly IS3Service _s3Service;
-        private readonly IAmazonS3 _client;
+        private readonly IAmazonS3 _s3client;
+        private readonly IDynamoDbService _dynamoDbService;
 
-        public PackageService(IS3Service s3Service)
+        public PackageService(IS3Service s3Service, IDynamoDbService dynamoDbService)
         {
+            // s3 logic 
             this._s3Service = s3Service;
-            this._client = this._s3Service.GetClient();
+            this._s3client = this._s3Service.GetClient();
+
+            // dynamodb logic 
+            this._dynamoDbService = dynamoDbService;
         }
 
-        public async Task UploadPackage(PackageFiles packageFiles)
+        // REFACTOR THIS LOGIC LETS JUST GET SOMETHING UPLOADING
+        // FOR NOW
+        public async Task UploadPackageAsync(PackageFiles packageFiles)
         {
-            // check this user is ok to 
+            // 1 - (if installed already) check the package user can upload this 
+            // 2 - (if installed already) check that the version is higher then already installed 
+            // 3 - (hard limits for the amount of files for now) say 500
+            // 4 - upload files to AWS s3 
+            // 5 - insert package data into dynamodb 
+            // 6 - done i think :) 
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageFiles.PackageName);
+
+            if ((await this.ValidateUpdatingPackageAsync(packageFiles.Version, packageDetails)))
+            {
+                string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
+                await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
+
+                // if it is null then its a brand new package 
+                if (packageDetails == null)
+                {
+                    PackageDetailsEntity packageEntity = new PackageDetailsEntity()
+                    {
+                        PackageName = packageFiles.PackageName,
+                        Version = new List<string> { packageFiles.Version },
+                        Private = false,
+                        Team = "",
+                        Owner = "",
+                        LatestVersion = packageFiles.Version
+                    };
+
+                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
+                }
+            }
+            else
+            {
+                throw new Exception("Not allowed to update file");
+            }
+        }
+
+        private async Task<bool> ValidateUpdatingPackageAsync(string newPackageVersion, PackageDetailsEntity packageDetails)
+        {
+            // comment out for dev testing
+            //if (packageDetails != null)
+            //{
+            //    return (this.UpdatingPackageHigherVersionThenCurrent(packageDetails.LatestVersion, newPackageVersion) &&
+            //            await this.AllowedToUpdatePackageAsync(packageDetails));
+            //}
+
+            return true;
+        }
+
+        private bool UpdatingPackageHigherVersionThenCurrent(string lastestPackageVersion,
+                                                             string newPackageVersion)
+        {
+            // for now lets assume every version follows a structure like this
+            // 1.0.0, 1.3.5, 6.7.5 - always 3 digits + 3 dots 
+            int packageVersion = int.Parse(lastestPackageVersion.Replace(".", ""));
+            int updatedPackageVersion = int.Parse(newPackageVersion.Replace(".", ""));
+
+            return updatedPackageVersion > packageVersion;
+        }
+
+        /// <summary>
+        /// Checks if the user can update the package
+        /// </summary>
+        /// <param name="packageDetails">The package details entity</param>
+        /// <returns>bool</returns>
+        private async Task<bool> AllowedToUpdatePackageAsync(PackageDetailsEntity packageDetails)
+        {
+            // check if they own this package
+            // UNCOMMENT THIS ONCE JWT UNPACKING LOGIC IS DONE
+            if (packageDetails.Owner == "JWTTOKENUSERADDRESS")
+            {
+                return true;
+            }
+            // if it is not owned by this user go and check the teams data 
+            else
+            {
+                TeamsEntity teamDetails =
+                    await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
+
+                if (teamDetails.AdminUsers.Contains("JWTTOKENUSERNAME"))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -48,7 +141,7 @@ namespace epm_api.Services
                     Prefix = prefix
                 };
 
-                packageFilesResponse = await this._client.ListObjectsV2Async(requestPackages);
+                packageFilesResponse = await this._s3client.ListObjectsV2Async(requestPackages);
                 foreach (S3Object entry in packageFilesResponse.S3Objects)
                 {
                     if (entry.Key != prefix)
@@ -59,7 +152,7 @@ namespace epm_api.Services
                             Key = entry.Key
                         };
 
-                        using (var response = await this._client.GetObjectAsync(request))
+                        using (var response = await this._s3client.GetObjectAsync(request))
                         {
                             using (var responseStream = response.ResponseStream)
                             {
@@ -76,7 +169,7 @@ namespace epm_api.Services
                 }
             } while (packageFilesResponse.IsTruncated);
 
-            return new PackageFiles(version, packageName,(IReadOnlyCollection<PackageFile>)files);
+            return new PackageFiles(version, packageName, (IReadOnlyCollection<PackageFile>)files);
         }
 
         /// <summary>

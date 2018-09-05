@@ -9,5 +9,7 @@ namespace epm_api.Services.Interfaces
     {
         IAmazonS3 GetClient();
         string GetBucketName();
+        Task UploadFileAsync(string fileContent, string keyName);
+        Task UploadFilesAsync(IReadOnlyCollection<S3File> filesContent, string rootkeyName);
     }
 }

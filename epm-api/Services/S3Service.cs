@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Amazon.S3.Model;
 using epm_api.Models;
@@ -31,6 +32,41 @@ namespace epm_api.Services
         public string GetBucketName()
         {
             return this._bucketName;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fileContent"></param>
+        /// <param name="keyName"></param>
+        /// <returns></returns>
+        public async Task UploadFileAsync(string fileContent, string keyName)
+        {
+            PutObjectRequest request = new PutObjectRequest()
+            {
+                ContentBody = fileContent,
+                BucketName = this.GetBucketName(),
+                Key = keyName
+            };
+
+            PutObjectResponse response = await this.GetClient().PutObjectAsync(request);
+            
+            // do something with response
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="s3Files"></param>
+        /// <param name="rootkeyName"></param>
+        /// <returns></returns>
+        public async Task UploadFilesAsync(IReadOnlyCollection<S3File> s3Files, string rootkeyName)
+        {
+            foreach (S3File s3File in s3Files)
+            {
+                string keyName = $"{rootkeyName}/{s3File.Name}";
+                await this.UploadFileAsync(s3File.Content, keyName);
+            }
         }
     }
 }

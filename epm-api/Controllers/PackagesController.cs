@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using epm_api.Dtos;
 using epm_api.Models;
@@ -35,11 +37,33 @@ namespace epm_api.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         [Route(template: "")]
-        public IActionResult Post([FromBody] UploadPackageRequestDto uploadPackageRequestDto)
+        public async Task<IActionResult> Post([FromBody] UploadPackageRequestDto uploadPackageRequestDto)
         {
-            return this.Ok(uploadPackageRequestDto);
+            IList<PackageFile> files = new List<PackageFile>();
+
+            foreach (var file in uploadPackageRequestDto.PackageFiles)
+            {
+                files.Add(new PackageFile(file.FileName, file.FileContent));
+            }
+
+            PackageFiles packageFiles = new PackageFiles
+            (
+                uploadPackageRequestDto.PackageVersion,
+                uploadPackageRequestDto.PackageName,
+                (IReadOnlyCollection<PackageFile>)files
+            );
+
+            try
+            {
+                await this._packageService.UploadPackageAsync(packageFiles);
+            }
+            catch (Exception ex)
+            {
+                return this.BadRequest(ex);
+            }
+
+            return this.Ok();
         }
     }
 }

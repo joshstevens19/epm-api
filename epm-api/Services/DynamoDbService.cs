@@ -18,9 +18,9 @@ namespace epm_api.Services
 
         public DynamoDbService()
         {
+            // may inject client in here with amazonclient class 
+            // so i do not have to do this all the time
             this._client = new AmazonDynamoDBClient(Amazon.RegionEndpoint.USEast1);
-            // may use context instead as per - https://aws.amazon.com/blogs/developer/dynamodb-apis/
-            // may be better working with proper types 
             this._context = new DynamoDBContext(this._client);
         }
 

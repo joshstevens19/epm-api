@@ -15,6 +15,6 @@ namespace epm_api.Dtos
         public string PackageVersion { get; set; }
 
         [Required]
-        public IReadOnlyList<PackageFilesRequestDto> PackageFiles { get; set; }
+        public IReadOnlyCollection<PackageFilesRequestDto> PackageFiles { get; set; }
     }
 }

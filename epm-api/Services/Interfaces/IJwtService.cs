@@ -5,6 +5,6 @@ namespace epm_api.Services.Interfaces
     public interface IJwtService
     {
         string GenerateToken(UsersEntity user, int expiryMinutes = 30);
-        string UnPackJWT(string jwtToken);
+        Profile UnPackJwtToProfile(string jwtToken);
     }
 }

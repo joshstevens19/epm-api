@@ -30,7 +30,8 @@ namespace epm_api.Services
 
         // REFACTOR THIS LOGIC LETS JUST GET SOMETHING UPLOADING
         // FOR NOW
-        public async Task UploadPackageAsync(PackageFiles packageFiles)
+        public async Task UploadPackageAsync(PackageFiles packageFiles,
+                                             EthereumPmMetaData ethereumPmMetaData)
         {
             // 1 - (if installed already) check the package user can upload this 
             // 2 - (if installed already) check that the version is higher then already installed 
@@ -46,21 +47,27 @@ namespace epm_api.Services
                 string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
                 await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
 
+                PackageDetailsEntity packageEntity = new PackageDetailsEntity();
+
                 // if it is null then its a brand new package 
                 if (packageDetails == null)
                 {
-                    PackageDetailsEntity packageEntity = new PackageDetailsEntity()
-                    {
-                        PackageName = packageFiles.PackageName,
-                        Version = new List<string> { packageFiles.Version },
-                        Private = false,
-                        Team = "",
-                        Owner = "",
-                        LatestVersion = packageFiles.Version
-                    };
-
-                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
+                    packageEntity.PackageName = packageFiles.PackageName;
+                    packageEntity.Version = new List<string> { packageFiles.Version };
+                    packageEntity.Private = ethereumPmMetaData.Private;
+                    packageEntity.Team = ethereumPmMetaData.Team;
+                    packageEntity.GitHub = ethereumPmMetaData.GitHub;
+                    packageEntity.Owner = "joshstevens19@hotmail.co.uk"; // once JWT completely working this will be dynamic
+                    packageEntity.LatestVersion = packageFiles.Version;
                 }
+                else
+                {
+                    packageEntity.Version.Add(packageFiles.Version);
+                    packageEntity.GitHub = ethereumPmMetaData.GitHub;
+                    packageEntity.LatestVersion = packageFiles.Version;
+                }
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
             }
             else
             {

@@ -7,6 +7,6 @@ namespace epm_api.Services.Interfaces
     public interface IPackageService
     {
         Task<PackageFiles> GetPackageFilesAsync(string packageName, string version);
-        Task UploadPackageAsync(PackageFiles packageFiles);
+        Task UploadPackageAsync(PackageFiles packageFiles, EthereumPmMetaData ethereumPmMetaData);
     }
 }

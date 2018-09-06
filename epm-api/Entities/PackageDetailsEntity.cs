@@ -16,6 +16,6 @@ namespace epm_api.Entities
         public string Team { get; set; }
         public string Owner { get; set; }
         public string LatestVersion { get; set; }
-        public Uri GitHubLink { get; set; }
+        public string GitHub { get; set; }
     }
 }

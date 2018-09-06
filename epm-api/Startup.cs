@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using Amazon.DynamoDBv2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
@@ -35,13 +36,13 @@ namespace epm_api
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
                         ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
+                        // ValidateIssuerSigningKey = true, sort later
                         ValidIssuer = "yourdomain.com",
-                        ValidAudience = "yourdomain.com",
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["SecurityKey"]))
+                        // ValidAudience = "yourdomain.com", sort later
+                        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(Configuration["SecurityKey"]))
                     };
                 });
 

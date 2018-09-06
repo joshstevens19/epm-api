@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using epm_api.Common;
 using epm_api.Dtos;
 using epm_api.Models;
 using epm_api.Services;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace epm_api.Controllers
 {
@@ -37,15 +41,43 @@ namespace epm_api.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         [Route(template: "")]
         public async Task<IActionResult> Post([FromBody] UploadPackageRequestDto uploadPackageRequestDto)
         {
-            IList<PackageFile> files = new List<PackageFile>();
+            IList<PackageFile> files = uploadPackageRequestDto.PackageFiles
+                                                              .Select(file => new PackageFile(file.FileName, file.FileContent))
+                                                              .ToList();
 
-            foreach (var file in uploadPackageRequestDto.PackageFiles)
+            // put a hard limit on the amount of files per package for now
+            if (files.Count > 99)
             {
-                files.Add(new PackageFile(file.FileName, file.FileContent));
+                return this.BadRequest("can not have more then 100 items in a package");
             }
+
+            PackageFile ethereumPm = files.FirstOrDefault(f => f.FileName == Constants.EthereumPmJson);
+            if (ethereumPm == null)
+            {
+                return this.BadRequest("To upload a package you need a `ethereum-pm.json` file");
+            }
+
+            JObject ethereumPmJson;
+
+            try
+            {
+                ethereumPmJson = JObject.Parse(ethereumPm.FileContent);
+            }
+            catch (Exception)
+            {
+                return this.BadRequest("Invalid JSON - `ethereum-pm.json`");
+            }
+
+            EthereumPmMetaData metaData = new EthereumPmMetaData()
+            {
+                GitHub = (string)ethereumPmJson["github"],
+                Private = (bool?)ethereumPmJson["private"] ?? false,
+                Team = (string)ethereumPmJson["team"]
+            };
 
             PackageFiles packageFiles = new PackageFiles
             (
@@ -56,7 +88,7 @@ namespace epm_api.Controllers
 
             try
             {
-                await this._packageService.UploadPackageAsync(packageFiles);
+                await this._packageService.UploadPackageAsync(packageFiles, metaData);
             }
             catch (Exception ex)
             {

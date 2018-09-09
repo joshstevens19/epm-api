@@ -7,15 +7,15 @@ namespace epm_api.Models
 {
     public class Profile
     {
-        public Profile(string emailAddress, string firstName, string lastName, string introduction)
+        public Profile(string username, string firstName, string lastName, string introduction)
         {
-            this.EmailAddress = emailAddress;
+            this.Username = username;
             this.FirstName = firstName;
             this.LastName = lastName;
             this.Introduction = introduction;
         }
 
-        public string EmailAddress { get; set; }
+        public string Username { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Introduction { get; set; }

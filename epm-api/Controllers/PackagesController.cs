@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using epm_api.Common;
 using epm_api.Dtos;
@@ -21,11 +22,13 @@ namespace epm_api.Controllers
     {
         private readonly IPackageService _packageService;
         private readonly IVersionService _versionService;
+        private readonly IJwtService _jwtService;
 
-        public PackagesController(IPackageService packageService, IVersionService versionService)
+        public PackagesController(IPackageService packageService, IVersionService versionService, IJwtService jwtService)
         {
             this._packageService = packageService;
             this._versionService = versionService;
+            this._jwtService = jwtService;
         }
 
         [HttpGet]
@@ -36,6 +39,16 @@ namespace epm_api.Controllers
             string latestVersion = await this._versionService.GetLatestVersionOfPackgeAsync(packageName);
 
             PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, latestVersion);
+
+            return this.Ok(packageFiles);
+        }
+
+        [HttpGet]
+        [Route(template: "{packageName}/{version}")]
+        [Produces("application/json")]
+        public async Task<IActionResult> Get([FromRoute] string packageName, [FromRoute] string version)
+        {
+            PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, version);
 
             return this.Ok(packageFiles);
         }
@@ -88,7 +101,9 @@ namespace epm_api.Controllers
 
             try
             {
-                await this._packageService.UploadPackageAsync(packageFiles, metaData);
+                UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+                await this._packageService.UploadPackageAsync(packageFiles, metaData, unpackedJwt.Username);
             }
             catch (Exception ex)
             {

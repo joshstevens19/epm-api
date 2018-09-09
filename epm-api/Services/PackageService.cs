@@ -31,7 +31,8 @@ namespace epm_api.Services
         // REFACTOR THIS LOGIC LETS JUST GET SOMETHING UPLOADING
         // FOR NOW
         public async Task UploadPackageAsync(PackageFiles packageFiles,
-                                             EthereumPmMetaData ethereumPmMetaData)
+                                             EthereumPmMetaData ethereumPmMetaData,
+                                             string jwtUsername)
         {
             // 1 - (if installed already) check the package user can upload this 
             // 2 - (if installed already) check that the version is higher then already installed 
@@ -42,7 +43,7 @@ namespace epm_api.Services
             PackageDetailsEntity packageDetails =
                 await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageFiles.PackageName);
 
-            if ((await this.ValidateUpdatingPackageAsync(packageFiles.Version, packageDetails)))
+            if ((await this.ValidateUpdatingPackageAsync(packageFiles.Version, packageDetails, jwtUsername)))
             {
                 string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
                 await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
@@ -57,17 +58,19 @@ namespace epm_api.Services
                     packageEntity.Private = ethereumPmMetaData.Private;
                     packageEntity.Team = ethereumPmMetaData.Team;
                     packageEntity.GitHub = ethereumPmMetaData.GitHub;
-                    packageEntity.Owner = "joshstevens19@hotmail.co.uk"; // once JWT completely working this will be dynamic
+                    packageEntity.Owner = jwtUsername;
                     packageEntity.LatestVersion = packageFiles.Version;
+
+                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
                 }
                 else
                 {
-                    packageEntity.Version.Add(packageFiles.Version);
-                    packageEntity.GitHub = ethereumPmMetaData.GitHub;
-                    packageEntity.LatestVersion = packageFiles.Version;
-                }
+                    packageDetails.Version.Add(packageFiles.Version);
+                    packageDetails.GitHub = ethereumPmMetaData.GitHub;
+                    packageDetails.LatestVersion = packageFiles.Version;
 
-                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
+                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+                }
             }
             else
             {
@@ -75,14 +78,15 @@ namespace epm_api.Services
             }
         }
 
-        private async Task<bool> ValidateUpdatingPackageAsync(string newPackageVersion, PackageDetailsEntity packageDetails)
+        private async Task<bool> ValidateUpdatingPackageAsync(string newPackageVersion, 
+                                                              PackageDetailsEntity packageDetails,
+                                                              string jwtUsername)
         {
-            // comment out for dev testing
-            //if (packageDetails != null)
-            //{
-            //    return (this.UpdatingPackageHigherVersionThenCurrent(packageDetails.LatestVersion, newPackageVersion) &&
-            //            await this.AllowedToUpdatePackageAsync(packageDetails));
-            //}
+            if (packageDetails != null)
+            {
+                return (this.UpdatingPackageHigherVersionThenCurrent(packageDetails.LatestVersion, newPackageVersion) &&
+                        await this.AllowedToUpdatePackageAsync(packageDetails, jwtUsername));
+            }
 
             return true;
         }
@@ -103,11 +107,11 @@ namespace epm_api.Services
         /// </summary>
         /// <param name="packageDetails">The package details entity</param>
         /// <returns>bool</returns>
-        private async Task<bool> AllowedToUpdatePackageAsync(PackageDetailsEntity packageDetails)
+        private async Task<bool> AllowedToUpdatePackageAsync(PackageDetailsEntity packageDetails,
+                                                             string jwtUsername)
         {
             // check if they own this package
-            // UNCOMMENT THIS ONCE JWT UNPACKING LOGIC IS DONE
-            if (packageDetails.Owner == "JWTTOKENUSERADDRESS")
+            if (packageDetails.Owner == jwtUsername)
             {
                 return true;
             }
@@ -117,7 +121,7 @@ namespace epm_api.Services
                 TeamsEntity teamDetails =
                     await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
 
-                if (teamDetails.AdminUsers.Contains("JWTTOKENUSERNAME"))
+                if (teamDetails.AdminUsers.Contains(jwtUsername))
                 {
                     return true;
                 }

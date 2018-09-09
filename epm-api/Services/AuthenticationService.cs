@@ -12,11 +12,9 @@ namespace epm_api.Services
 {
     public class AuthenticationService : IAuthenticationService
     {
-        private readonly IJwtService _jwtService;
         private readonly IDynamoDbService _dynamoDbService;
-        public AuthenticationService(IJwtService jwtService, IDynamoDbService dynamoDbService)
+        public AuthenticationService(IDynamoDbService dynamoDbService)
         {
-            this._jwtService = jwtService;
             this._dynamoDbService = dynamoDbService;
         }
 

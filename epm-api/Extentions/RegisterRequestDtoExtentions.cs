@@ -15,7 +15,7 @@ namespace epm_api.Dtos.Extentions
                 Blocked = false,
                 CreatedOn = DateTime.Now,
                 UpdatedOn = DateTime.Now,
-                EmailAddress = dto.EmailAddress,
+                Username = dto.Username,
                 FirstName = dto.FirstName,
                 Introduction = dto.Introduction,
                 LastName = dto.LastName,

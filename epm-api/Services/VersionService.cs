@@ -4,19 +4,18 @@ using System.Linq;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using epm_api.Entities;
 using epm_api.Services.Interfaces;
 
 namespace epm_api.Services
 {
     public class VersionService : IVersionService
     {
-        private readonly IS3Service _s3Service;
-        private readonly IAmazonS3 _client;
+        private readonly IDynamoDbService _dynamoDbService;
 
-        public VersionService(IS3Service s3Service)
+        public VersionService(IDynamoDbService dynamoDbService)
         {
-            this._s3Service = s3Service;
-            this._client = this._s3Service.GetClient();
+            this._dynamoDbService = dynamoDbService;
         }
 
         /// <summary>
@@ -26,15 +25,10 @@ namespace epm_api.Services
         /// <returns></returns>
         public async Task<string> GetLatestVersionOfPackgeAsync(string packageName)
         {
-            ListObjectsRequest request = new ListObjectsRequest
-            {
-                BucketName = this._s3Service.GetBucketName(),
-                Prefix = packageName + "/latestversion"
-            };
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
 
-            S3Object versionDetails = (await this._client.ListObjectsAsync(request)).S3Objects.FirstOrDefault();
-
-            return versionDetails?.Key.Split('@')[1];
+            return packageDetails?.LatestVersion;
         }
     }
 }

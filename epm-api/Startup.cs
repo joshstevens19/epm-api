@@ -34,6 +34,7 @@ namespace epm_api
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
+                    options.SaveToken = true;
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = false,
@@ -42,7 +43,7 @@ namespace epm_api
                         // ValidateIssuerSigningKey = true, sort later
                         ValidIssuer = "yourdomain.com",
                         // ValidAudience = "yourdomain.com", sort later
-                        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(Configuration["SecurityKey"]))
+                        IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(Configuration["SecurityKey"])),
                     };
                 });
 
@@ -53,6 +54,7 @@ namespace epm_api
             services.AddSingleton<IAuthenticationService, AuthenticationService>();
             services.AddSingleton<IPackageService, PackageService>();
             services.AddSingleton<IVersionService, VersionService>();
+            services.AddSingleton<IProfileService, ProfileService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();

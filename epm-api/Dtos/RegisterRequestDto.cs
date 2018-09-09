@@ -5,7 +5,7 @@ namespace epm_api.Dtos
     public class RegisterRequestDto
     {
         [Required]
-        public string EmailAddress { get; set; }
+        public string Username { get; set; }
         [Required]
         public string Password { get; set; }
         [Required]

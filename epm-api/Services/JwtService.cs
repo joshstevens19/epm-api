@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -17,7 +18,7 @@ namespace epm_api.Services
         private readonly IConfiguration _configuration;
 
         // claims consts
-        private const string ClaimEmailAddress = "emailAddress";
+        private const string ClaimUsername = "username";
         private const string ClaimFirstName = "firstName";
         private const string ClaimLastName = "lastName";
         private const string ClaimIntroduction = "introduction";
@@ -33,7 +34,7 @@ namespace epm_api.Services
 
             Claim[] claims = new[]
             {
-                new Claim(ClaimEmailAddress, user.EmailAddress),
+                new Claim(ClaimUsername, user.Username),
                 new Claim(ClaimFirstName, user.FirstName), 
                 new Claim(ClaimLastName, user.LastName), 
                 new Claim(ClaimIntroduction, user.Introduction)
@@ -43,7 +44,7 @@ namespace epm_api.Services
             SigningCredentials creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             JwtSecurityToken token = new JwtSecurityToken(
-                issuer: "yourdomain.com",
+                // issuer: "yourdomain.com",
                 // audience: "yourdomain.com", // sort domain later
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(expiryMinutes),
@@ -53,16 +54,14 @@ namespace epm_api.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public Profile UnPackJwtToProfile(string jwtToken)
+        public UnpackedJwt UnpackJwtClaimsToProfile(IList<Claim> claims)
         {
-            JwtSecurityToken decodedJwt = new JwtSecurityTokenHandler().ReadJwtToken(jwtToken);
+            Claim emailAddress = this.GetClaim(claims, ClaimUsername);
+            Claim firstName = this.GetClaim(claims, ClaimFirstName);
+            Claim lastName = this.GetClaim(claims, ClaimLastName);
+            Claim introduction = this.GetClaim(claims, ClaimIntroduction);
 
-            Claim emailAddress = this.GetClaim(decodedJwt, ClaimEmailAddress);
-            Claim firstName = this.GetClaim(decodedJwt, ClaimFirstName);
-            Claim lastName = this.GetClaim(decodedJwt, ClaimLastName);
-            Claim introduction = this.GetClaim(decodedJwt, ClaimIntroduction);
-
-            return new Profile(
+            return new UnpackedJwt(
                 emailAddress?.Value, 
                 firstName?.Value, 
                 lastName?.Value, 
@@ -70,9 +69,9 @@ namespace epm_api.Services
             );
         }
 
-        private Claim GetClaim(JwtSecurityToken decodedJwt, string claimType)
+        private Claim GetClaim(IEnumerable<Claim> claims, string claimType)
         {
-            return decodedJwt.Claims.FirstOrDefault(c => c.Type == claimType);
+            return claims.FirstOrDefault(c => c.Type == claimType);
         }
     }
 }

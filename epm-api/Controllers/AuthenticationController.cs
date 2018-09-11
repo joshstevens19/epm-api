@@ -27,6 +27,7 @@ namespace epm_api.Controllers
         /// Validates if a jwt is still valid 
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         [Route(template: "validate")]
         [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
         [ProducesResponseType((int)HttpStatusCode.OK)]
@@ -39,6 +40,7 @@ namespace epm_api.Controllers
         /// Logins the user in using there username and password
         /// </summary>
         /// <returns></returns>
+        [HttpPost]
         [Route(template: "login")]
         [ProducesResponseType((int) HttpStatusCode.OK)]
         public async Task<IActionResult> Post([FromBody] LoginRequestDto loginRequestDto)
@@ -62,6 +64,7 @@ namespace epm_api.Controllers
             return this.Ok(new JwtDetails(jwtToken, expiryDate));
         }
 
+        [HttpPost]
         [Route(template: "logout")]
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public IActionResult Post()
@@ -69,6 +72,7 @@ namespace epm_api.Controllers
             return this.Ok();
         }
 
+        [HttpPost]
         [Route(template: "register")]
         [ProducesResponseType((int) HttpStatusCode.OK)]
         public async Task<IActionResult> PostRegister([FromBody] RegisterRequestDto registerRequestDto)

@@ -28,74 +28,184 @@ namespace epm_api.Services
             this._dynamoDbService = dynamoDbService;
         }
 
-        // REFACTOR THIS LOGIC LETS JUST GET SOMETHING UPLOADING
-        // FOR NOW
+        //public async Task DeprecatePackage(string packageName, string jwtUsername)
+        //{
+        //    PackageDetailsEntity packageDetails =
+        //        await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+        //    if (packageDetails == null)
+        //        throw new Exception("This package does not exist");
+
+        //    // ------------------- TO DO -------------------------
+        //    // - check that the user can update this package
+        //    // - do logic with admin users on packages for none teams 
+        //    // - check against team or admin users
+        //    // - maybe only the owner can deprecate the package? but admin should be enough 
+        //    //   if you think about it
+        //    // - before i do this do the logic for admin users on USER package
+        //}
+
+        public async Task AddAdminUserToPackage(string packageName,
+                                                string username,
+                                                string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(username);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to add memebers to this package");
+
+            if (packageDetails.AdminUsers.Contains(jwtUsername))
+            {
+                if (!packageDetails.AdminUsers.Contains(username))
+                {
+                    packageDetails.AdminUsers.Add(username);
+                }
+                
+                // do nothing as already present in team :)
+            }
+            else
+            {
+                throw new Exception("Do not have permission to add a admin user to this package");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageFiles"></param>
+        /// <param name="ethereumPmMetaData"></param>
+        /// <param name="jwtUsername"></param>
+        /// <returns></returns>
         public async Task UploadPackageAsync(PackageFiles packageFiles,
                                              EthereumPmMetaData ethereumPmMetaData,
                                              string jwtUsername)
         {
-            // 1 - (if installed already) check the package user can upload this 
-            // 2 - (if installed already) check that the version is higher then already installed 
-            // 3 - (hard limits for the amount of files for now) say 500
-            // 4 - upload files to AWS s3 
-            // 5 - insert package data into dynamodb 
-            // 6 - done i think :) 
             PackageDetailsEntity packageDetails =
                 await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageFiles.PackageName);
 
-            if ((await this.ValidateUpdatingPackageAsync(packageFiles.Version, packageDetails, jwtUsername)))
+            // if it is null then its a brand new package 
+            if (packageDetails == null)
             {
-                string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
-                await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
 
-                PackageDetailsEntity packageEntity = new PackageDetailsEntity();
+                // should be in a transaction which i will put in, as if one of these 
+                // fails then i want to roll back all the data, i don't really want to
+                // to insert then delete so will look at dynamodb to see if this rollback
+                // logic exists 
+                TeamsEntity teamsEntity = null;
 
-                // if it is null then its a brand new package 
-                if (packageDetails == null)
+                // if it is a package for a team
+                if (!string.IsNullOrEmpty(ethereumPmMetaData.Team))
                 {
-                    packageEntity.PackageName = packageFiles.PackageName;
-                    packageEntity.Version = new List<string> { packageFiles.Version };
-                    packageEntity.Private = ethereumPmMetaData.Private;
-                    packageEntity.Team = ethereumPmMetaData.Team;
-                    packageEntity.GitHub = ethereumPmMetaData.GitHub;
-                    packageEntity.Owner = jwtUsername;
-                    packageEntity.LatestVersion = packageFiles.Version;
+                    teamsEntity = await this._dynamoDbService.GetItemAsync<TeamsEntity>(ethereumPmMetaData.Team);
 
-                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageEntity);
+                    if (teamsEntity == null) throw new Exception("Team does not exists");
+
+                    packageDetails = new PackageDetailsEntity
+                    {
+                        PackageName = packageFiles.PackageName,
+                        Version = new List<string> { packageFiles.Version },
+                        Private = ethereumPmMetaData.Private,
+                        Team = ethereumPmMetaData.Team,
+                        GitHub = ethereumPmMetaData.GitHub,
+                        Owner = ethereumPmMetaData.Team,
+                        LatestVersion = packageFiles.Version,
+                        Deprecated = false,
+                    };
+
                 }
                 else
                 {
-                    packageDetails.Version.Add(packageFiles.Version);
-                    packageDetails.GitHub = ethereumPmMetaData.GitHub;
-                    packageDetails.LatestVersion = packageFiles.Version;
+                    packageDetails = new PackageDetailsEntity
+                    {
+                        PackageName = packageFiles.PackageName,
+                        Version = new List<string> {packageFiles.Version},
+                        Private = ethereumPmMetaData.Private,
+                        Team = ethereumPmMetaData.Team,
+                        GitHub = ethereumPmMetaData.GitHub,
+                        Owner = jwtUsername,
+                        LatestVersion = packageFiles.Version,
+                        Deprecated = false,
+                        AdminUsers = new List<string> {jwtUsername}
+                    };
+                }
 
-                    await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+
+                if (teamsEntity != null)
+                {
+                    if (teamsEntity.Packages == null || teamsEntity.Packages.GetType() != typeof(List<string>))
+                        teamsEntity.Packages = new List<string>();
+
+                    teamsEntity.Packages.Add(packageFiles.PackageName);
+
+                    await this._dynamoDbService.PutItemAsync<TeamsEntity>(teamsEntity);
+                }
+                else
+                {
+                    // as they have authenticated with the request the user should always exist 
+                    // do not want to do a load on db to check each time
+                    UsersEntity usersEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(jwtUsername);
+
+                    if (usersEntity.Packages == null || usersEntity.Packages.GetType() != typeof(List<string>))
+                        usersEntity.Packages = new List<string>();
+
+                    usersEntity.Packages.Add(packageFiles.PackageName);
+
+                    await this._dynamoDbService.PutItemAsync<UsersEntity>(usersEntity);
                 }
             }
             else
             {
-                throw new Exception("Not allowed to update file");
+                if (!this.UpdatingPackageHigherVersionThenCurrent(packageDetails.LatestVersion, packageFiles.Version))
+                {
+                    throw new Exception("Your package version is not higher then the current one");
+                }
+
+                bool allowedToUpdatePackage =
+                    await this.AllowedToUpdatePackageAsync(packageDetails.Team, packageDetails.AdminUsers, jwtUsername);
+
+                if (!allowedToUpdatePackage)
+                {
+                    throw new Exception("You are not allowed to update this package");
+                }
+
+                packageDetails.Version.Add(packageFiles.Version);
+                packageDetails.GitHub = ethereumPmMetaData.GitHub;
+                packageDetails.LatestVersion = packageFiles.Version;
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
             }
+
+            // upload the files last, this means it all has been successfully inserted into 
+            // the db
+            string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
+            await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
         }
 
-        private async Task<bool> ValidateUpdatingPackageAsync(string newPackageVersion, 
-                                                              PackageDetailsEntity packageDetails,
-                                                              string jwtUsername)
-        {
-            if (packageDetails != null)
-            {
-                return (this.UpdatingPackageHigherVersionThenCurrent(packageDetails.LatestVersion, newPackageVersion) &&
-                        await this.AllowedToUpdatePackageAsync(packageDetails, jwtUsername));
-            }
-
-            return true;
-        }
-
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="lastestPackageVersion"></param>
+        /// <param name="newPackageVersion"></param>
+        /// <returns></returns>
         private bool UpdatingPackageHigherVersionThenCurrent(string lastestPackageVersion,
                                                              string newPackageVersion)
         {
             // for now lets assume every version follows a structure like this
             // 1.0.0, 1.3.5, 6.7.5 - always 3 digits + 3 dots 
+            // will support a few version i am thinking
+               // > 1.0 - not sure if this makes any sense though 
+               // > 1.0.0
+               // > 1.0.0.0
             int packageVersion = int.Parse(lastestPackageVersion.Replace(".", ""));
             int updatedPackageVersion = int.Parse(newPackageVersion.Replace(".", ""));
 
@@ -105,26 +215,28 @@ namespace epm_api.Services
         /// <summary>
         /// Checks if the user can update the package
         /// </summary>
-        /// <param name="packageDetails">The package details entity</param>
+        /// <param name="adminUsers"></param>
+        /// <param name="jwtUsername"></param>
+        /// <param name="team"></param>
         /// <returns>bool</returns>
-        private async Task<bool> AllowedToUpdatePackageAsync(PackageDetailsEntity packageDetails,
+        private async Task<bool> AllowedToUpdatePackageAsync(string team,
+                                                             List<string> adminUsers,
                                                              string jwtUsername)
         {
-            // check if they own this package
-            if (packageDetails.Owner == jwtUsername)
+            if (!string.IsNullOrEmpty(team))
             {
-                return true;
-            }
-            // if it is not owned by this user go and check the teams data 
-            else
-            {
-                TeamsEntity teamDetails =
-                    await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
+                TeamsEntity teamDetails = await this._dynamoDbService.GetItemAsync<TeamsEntity>(team);
+
+                if (teamDetails == null) return false;
 
                 if (teamDetails.AdminUsers.Contains(jwtUsername))
                 {
                     return true;
                 }
+            }
+            else if (adminUsers.Contains(jwtUsername))
+            {
+                return true;
             }
 
             return false;

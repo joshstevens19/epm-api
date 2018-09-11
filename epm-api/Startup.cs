@@ -41,7 +41,7 @@ namespace epm_api
                         ValidateAudience = false,
                         ValidateLifetime = true,
                         // ValidateIssuerSigningKey = true, sort later
-                        ValidIssuer = "yourdomain.com",
+                        // ValidIssuer = "yourdomain.com",
                         // ValidAudience = "yourdomain.com", sort later
                         IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(Configuration["SecurityKey"])),
                     };
@@ -55,6 +55,7 @@ namespace epm_api
             services.AddSingleton<IPackageService, PackageService>();
             services.AddSingleton<IVersionService, VersionService>();
             services.AddSingleton<IProfileService, ProfileService>();
+            services.AddSingleton<ITeamService, TeamService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();

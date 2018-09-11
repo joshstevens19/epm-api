@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using epm_api.Common;
-using epm_api.Dtos;
 using epm_api.Models;
-using epm_api.Services;
+using epm_api.Packages.Dtos;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace epm_api.Controllers
@@ -51,6 +47,28 @@ namespace epm_api.Controllers
             PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, version);
 
             return this.Ok(packageFiles);
+        }
+
+        //[HttpPost]
+        //[Authorize]
+        //[Route(template: "deprecated")]
+        //public async Task<IActionResult> Post([FromBody] DeprecatePackageRequestDto deprecatePackageRequestDto)
+        //{
+
+        //}
+
+        [HttpPost]
+        [Authorize]
+        [Route(template: "admin")]
+        public async Task<IActionResult> Post([FromBody] AddAdminToPackageRequestDto addAdminToPackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._packageService.AddAdminUserToPackage(addAdminToPackageRequestDto.PackageName,
+                                                             addAdminToPackageRequestDto.Username,
+                                                             unpackedJwt.Username);
+
+            return this.Ok();
         }
 
         [HttpPost]

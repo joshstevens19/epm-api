@@ -56,6 +56,7 @@ namespace epm_api
             services.AddSingleton<IVersionService, VersionService>();
             services.AddSingleton<IProfileService, ProfileService>();
             services.AddSingleton<ITeamService, TeamService>();
+            services.AddSingleton<IStarService, StarService>();
             // services.AddDefaultAWSOptions(Configuration.GetAWSOptions()); - want to get it working from development.json
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();

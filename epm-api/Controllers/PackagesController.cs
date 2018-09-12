@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using epm_api.Common;
+using epm_api.Dtos.Packages;
 using epm_api.Models;
 using epm_api.Packages.Dtos;
 using epm_api.Services.Interfaces;
@@ -34,7 +35,15 @@ namespace epm_api.Controllers
         {
             string latestVersion = await this._versionService.GetLatestVersionOfPackgeAsync(packageName);
 
-            PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, latestVersion);
+            string jwtUsername = string.Empty;
+
+            if (User != null)
+            {
+                UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+                jwtUsername = unpackedJwt.Username;
+            }
+
+            PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, latestVersion, jwtUsername);
 
             return this.Ok(packageFiles);
         }
@@ -44,18 +53,48 @@ namespace epm_api.Controllers
         [Produces("application/json")]
         public async Task<IActionResult> Get([FromRoute] string packageName, [FromRoute] string version)
         {
-            PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, version);
+            string jwtUsername = string.Empty;
+
+            if (User != null)
+            {
+                UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+                jwtUsername = unpackedJwt.Username;
+            }
+
+            PackageFiles packageFiles = await this._packageService.GetPackageFilesAsync(packageName, version, jwtUsername);
 
             return this.Ok(packageFiles);
         }
 
-        //[HttpPost]
-        //[Authorize]
-        //[Route(template: "deprecated")]
-        //public async Task<IActionResult> Post([FromBody] DeprecatePackageRequestDto deprecatePackageRequestDto)
-        //{
+        [HttpPost]
+        [Authorize]
+        [Route(template: "deprecate")]
+        public async Task<IActionResult> Post([FromBody] DeprecatePackageRequestDto deprecatePackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
 
-        //}
+
+            await this._packageService.UpdateDeprecateValueInPackage(deprecatePackageRequestDto.PackageName,
+                                                                     unpackedJwt.Username, 
+                                                                     true);
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [Route(template: "undeprecate")]
+        public async Task<IActionResult> UndeprecatePost([FromBody] DeprecatePackageRequestDto undeprecatePackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+
+            await this._packageService.UpdateDeprecateValueInPackage(undeprecatePackageRequestDto.PackageName,
+                                                                     unpackedJwt.Username,
+                                                                     false);
+
+            return this.Ok();
+        }
 
         [HttpPost]
         [Authorize]

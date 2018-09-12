@@ -28,23 +28,56 @@ namespace epm_api.Services
             this._dynamoDbService = dynamoDbService;
         }
 
-        //public async Task DeprecatePackage(string packageName, string jwtUsername)
-        //{
-        //    PackageDetailsEntity packageDetails =
-        //        await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="jwtUsername"></param>
+        /// <param name="deprecate"></param>
+        /// <returns></returns>
+        public async Task UpdateDeprecateValueInPackage(string packageName,
+                                                        string jwtUsername,
+                                                        bool deprecate)
+        {
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
 
-        //    if (packageDetails == null)
-        //        throw new Exception("This package does not exist");
+            if (packageDetails == null)
+                throw new Exception("This package does not exist");
 
-        //    // ------------------- TO DO -------------------------
-        //    // - check that the user can update this package
-        //    // - do logic with admin users on packages for none teams 
-        //    // - check against team or admin users
-        //    // - maybe only the owner can deprecate the package? but admin should be enough 
-        //    //   if you think about it
-        //    // - before i do this do the logic for admin users on USER package
-        //}
+            // if the package is already deprecate do not
+            // call anymore api logic
+            if (packageDetails.Deprecated == deprecate)
+                return;
 
+            // is team
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+            {
+                TeamsEntity teamsEntity = await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
+
+                if (!teamsEntity.AdminUsers.Contains(jwtUsername))
+                    throw new Exception("You are not allowed to mark this package as deprecated");
+
+                packageDetails.Deprecated = deprecate;
+            }
+            // it is a normal user who owns the package
+            else
+            {
+                if (!packageDetails.AdminUsers.Contains(jwtUsername))
+                    throw new Exception("You are not allowed to mark this package as deprecated");
+            }
+
+            packageDetails.Deprecated = deprecate;
+            await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="username"></param>
+        /// <param name="jwtUsername"></param>
+        /// <returns></returns>
         public async Task AddAdminUserToPackage(string packageName,
                                                 string username,
                                                 string jwtUsername)
@@ -69,7 +102,7 @@ namespace epm_api.Services
                 {
                     packageDetails.AdminUsers.Add(username);
                 }
-                
+
                 // do nothing as already present in team :)
             }
             else
@@ -120,21 +153,20 @@ namespace epm_api.Services
                         LatestVersion = packageFiles.Version,
                         Deprecated = false,
                     };
-
                 }
                 else
                 {
                     packageDetails = new PackageDetailsEntity
                     {
                         PackageName = packageFiles.PackageName,
-                        Version = new List<string> {packageFiles.Version},
+                        Version = new List<string> { packageFiles.Version },
                         Private = ethereumPmMetaData.Private,
                         Team = ethereumPmMetaData.Team,
                         GitHub = ethereumPmMetaData.GitHub,
                         Owner = jwtUsername,
                         LatestVersion = packageFiles.Version,
                         Deprecated = false,
-                        AdminUsers = new List<string> {jwtUsername}
+                        AdminUsers = new List<string> { jwtUsername }
                     };
                 }
 
@@ -203,9 +235,9 @@ namespace epm_api.Services
             // for now lets assume every version follows a structure like this
             // 1.0.0, 1.3.5, 6.7.5 - always 3 digits + 3 dots 
             // will support a few version i am thinking
-               // > 1.0 - not sure if this makes any sense though 
-               // > 1.0.0
-               // > 1.0.0.0
+            // > 1.0 - not sure if this makes any sense though 
+            // > 1.0.0
+            // > 1.0.0.0
             int packageVersion = int.Parse(lastestPackageVersion.Replace(".", ""));
             int updatedPackageVersion = int.Parse(newPackageVersion.Replace(".", ""));
 
@@ -247,9 +279,38 @@ namespace epm_api.Services
         /// </summary>
         /// <param name="packageName">The package name</param>
         /// <param name="version">The version requested</param>
+        /// <param name="jwtUsername"></param>
         /// <returns>A read only collection of package files</returns>
-        public async Task<PackageFiles> GetPackageFilesAsync(string packageName, string version)
+        public async Task<PackageFiles> GetPackageFilesAsync(string packageName,
+                                                             string version, 
+                                                             string jwtUsername)
         {
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("Package does not exist");
+
+            // if it is a private package lets check this person can install it
+            if (packageDetails.Private)
+            {
+                // is team
+                if (!string.IsNullOrEmpty(packageDetails.Team))
+                {
+                    TeamsEntity teamsEntity = await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
+
+                    if (!teamsEntity.Users.Contains(jwtUsername))
+                        throw new Exception("You are not allowed to install this package");
+                }
+                // it is a normal user who owns the package
+                else
+                {
+                    if (!packageDetails.AdminUsers.Contains(jwtUsername))
+                        throw new Exception("You are not allowed to install this package");
+                }
+            }
+
             IList<PackageFile> files = new List<PackageFile>();
 
             ListObjectsV2Response packageFilesResponse;

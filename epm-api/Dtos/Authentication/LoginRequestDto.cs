@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace epm_api.Dtos
+namespace epm_api.Dtos.Authentication
 {
     public class LoginRequestDto
     {

@@ -2,6 +2,7 @@
 using System.Net;
 using System.Threading.Tasks;
 using epm_api.Dtos;
+using epm_api.Dtos.Authentication;
 using epm_api.Dtos.Extentions;
 using epm_api.Models;
 using epm_api.Services;

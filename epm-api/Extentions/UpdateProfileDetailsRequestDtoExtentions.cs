@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using epm_api.Dtos;
+﻿using epm_api.Dtos.Profile;
 using epm_api.Models;
 
 namespace epm_api.Extentions

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using epm_api.Dtos.Authentication;
 using epm_api.Models;
 
 namespace epm_api.Dtos.Extentions

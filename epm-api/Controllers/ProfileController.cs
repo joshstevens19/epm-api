@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
-using epm_api.Dtos;
+using epm_api.Dtos.Profile;
 using epm_api.Extentions;
 using epm_api.Models;
 using epm_api.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace epm_api.Controllers

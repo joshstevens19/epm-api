@@ -54,6 +54,8 @@ namespace epm_api.Services
 
             if (userEntity == null) throw new Exception("Username is not a valid user");
 
+            // if (userEntity.Teams != null && !userEntity.Teams.Contains(teamName)) - need this line as some calls may not be needed 
+
             TeamsEntity teamsEntity = await this._dynamoDbService.GetItemAsync<TeamsEntity>(teamName);
 
             if (teamsEntity == null) throw new Exception("No team found");
@@ -114,7 +116,7 @@ namespace epm_api.Services
         /// <param name="username"></param>
         /// <param name="jwtUsername"></param>
         /// <returns></returns>
-        public async Task<TeamsEntity> RemoveAdminUser(string teamName, string username, string jwtUsername)
+        public async Task<TeamsEntity> RevokeAdminUserPermission(string teamName, string username, string jwtUsername)
         {
             TeamsEntity teamsEntity = await this._dynamoDbService.GetItemAsync<TeamsEntity>(teamName);
 

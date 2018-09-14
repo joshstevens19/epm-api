@@ -11,7 +11,7 @@ namespace epm_api.Services.Interfaces
         Task<TeamsEntity> CreateTeam(string teamName, bool isPrivate, string username);
         Task<TeamsEntity> AddUser(string teamName, string newUser, bool isAdmin, string adminUser);
         Task<TeamsEntity> RemoveUser(string teamName, string username, string jwtUsername);
-        Task<TeamsEntity> RemoveAdminUser(string teamName, string username, string jwtUsername);
+        Task<TeamsEntity> RevokeAdminUserPermission(string teamName, string username, string jwtUsername);
         Task<TeamsEntity> TransferOwner(string teamName, string newOwner, string jwtUsername);
     }
 }

@@ -39,8 +39,7 @@ namespace epm_api.Controllers
         {
             UnpackedJwt unpackJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
 
-            // do the logic to get the teams this user is part off
-            // split up by admin and normal user 
+            // ------- TO DO ------
 
             return this.Ok();
         }
@@ -100,6 +99,21 @@ namespace epm_api.Controllers
                 revokeAdminPermissionFromUserForTeamRequestDto.TeamName,
                 revokeAdminPermissionFromUserForTeamRequestDto.Username,
                 unpackJwt.Username);
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Route(template: "users/admin")]
+        [ProducesResponseType((int) HttpStatusCode.OK)]
+
+        public async Task<IActionResult> Post([FromBody] AddAdminPermissionForTeamRequestDto adminPermissionForTeamRequestDto)
+        {
+            UnpackedJwt unpackJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._teamService.RevokeAdminUserPermission(adminPermissionForTeamRequestDto.TeamName,
+                                                              adminPermissionForTeamRequestDto.Username, 
+                                                              unpackJwt.Username);
 
             return this.Ok();
         }

@@ -25,19 +25,6 @@ namespace epm_api.Controllers
         }
 
         /// <summary>
-        /// Validates if a jwt is still valid 
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        [Route(template: "validate")]
-        [ProducesResponseType((int)HttpStatusCode.Unauthorized)]
-        [ProducesResponseType((int)HttpStatusCode.OK)]
-        public IActionResult Get()
-        {
-            return this.Ok();
-        }
-
-        /// <summary>
         /// Logins the user in using there username and password
         /// </summary>
         /// <returns></returns>
@@ -70,6 +57,7 @@ namespace epm_api.Controllers
         [ProducesResponseType((int)HttpStatusCode.OK)]
         public IActionResult Post()
         {
+            // HANDLE LOGIC FOR LOGOUT NOT SURE BEST WAY AS JWT ARE STATELESS 
             return this.Ok();
         }
 
@@ -85,9 +73,10 @@ namespace epm_api.Controllers
             }
 
             const int expiryMinutes = 30;
-            string jwtToken = this._jwtService.GenerateToken(user, expiryMinutes);
             DateTime expiryDate = DateTime.Now.AddMinutes(expiryMinutes);
 
+            string jwtToken = this._jwtService.GenerateToken(user, expiryMinutes);
+ 
             return this.Ok(new JwtDetails(jwtToken, expiryDate));
         }
     }

@@ -8,5 +8,6 @@ namespace epm_api.Services.Interfaces
     {
         string GenerateToken(UsersEntity user, int expiryMinutes = 30);
         UnpackedJwt UnpackJwtClaimsToProfile(IList<Claim> claims);
+        string RefreshToken(Claim[] claims, int expiryMinutes = 30);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Net;
-using epm_api.Dtos.Teams;
+using epm_api.Dtos.Tokens;
 using epm_api.Models;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;

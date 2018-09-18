@@ -68,6 +68,25 @@ namespace epm_api.Controllers
 
         [HttpPost]
         [Authorize]
+        [Route(template: "unpublish")]
+        public async Task<IActionResult> Post([FromBody] UnpublishPackageRequestDtos unpublishPackageRequestDto)
+        {
+            UnpackedJwt unpackJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            try
+            {
+                await this._packageService.UnpublishPackage(unpublishPackageRequestDto.PackageName, unpackJwt.Username);
+            }
+            catch (Exception ex)
+            {
+                return this.BadRequest(ex.ToString());
+            }
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
         [Route(template: "deprecate")]
         public async Task<IActionResult> Post([FromBody] DeprecatePackageRequestDto deprecatePackageRequestDto)
         {

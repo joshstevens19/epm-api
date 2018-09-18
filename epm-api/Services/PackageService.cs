@@ -152,6 +152,7 @@ namespace epm_api.Services
                         Owner = ethereumPmMetaData.Team,
                         LatestVersion = packageFiles.Version,
                         Deprecated = false,
+                        CreatedOn = DateTime.UtcNow
                     };
                 }
                 else
@@ -166,7 +167,8 @@ namespace epm_api.Services
                         Owner = jwtUsername,
                         LatestVersion = packageFiles.Version,
                         Deprecated = false,
-                        AdminUsers = new List<string> { jwtUsername }
+                        AdminUsers = new List<string> { jwtUsername },
+                        CreatedOn = DateTime.UtcNow
                     };
                 }
 
@@ -221,6 +223,56 @@ namespace epm_api.Services
             // the db
             string keyName = $"{packageFiles.PackageName}/{packageFiles.Version}";
             await this._s3Service.UploadFilesAsync(packageFiles.Files.ToS3Files(), keyName);
+        }
+
+        /// <summary>
+        /// This unpublishs a package if it was created before 72 hours ago
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="jwtUsername">The JWT username</param>
+        /// <returns></returns>
+        public async Task UnpublishPackage(string packageName,
+                                           string jwtUsername)
+        {
+            UsersEntity user = await this._dynamoDbService.GetItemAsync<UsersEntity>(jwtUsername);
+            TeamsEntity team = null;
+
+            PackageDetailsEntity packageDetails = await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("Package does not exist");
+
+            if (packageDetails.Team != null)
+            {
+                team = await this._dynamoDbService.GetItemAsync<TeamsEntity>(packageDetails.Team);
+                if (!team.AdminUsers.Contains(jwtUsername))
+                    throw new Exception("You are not allowed to unpublish this package");
+            }
+            else
+            {
+
+                if (!packageDetails.AdminUsers.Contains(jwtUsername))
+                    throw new Exception("You are not allowed to unpublish this package");
+            }
+
+            DateTime unpublishedMaxDate = packageDetails.CreatedOn.AddDays(3);
+
+            if (unpublishedMaxDate > DateTime.UtcNow)
+                throw new Exception("You can only unpublish a package 72 hours after it has been created. Please mark it as deprecated");
+
+            await this._dynamoDbService.DeleteItemAsync<PackageDetailsEntity>(packageName);
+            if (team != null)
+            {
+                team.Packages = team.Packages.Where(p => p != packageName).ToList();
+                await this._dynamoDbService.PutItemAsync<TeamsEntity>(team);
+            }
+            else
+            {
+                user.Packages = user.Packages.Where(p => p != packageName).ToList();
+                await this._dynamoDbService.PutItemAsync<UsersEntity>(user);
+            }
+
+
         }
 
         /// <summary>

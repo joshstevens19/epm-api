@@ -10,5 +10,6 @@ namespace epm_api.Services.Interfaces
         Task UploadPackageAsync(PackageFiles packageFiles, EthereumPmMetaData ethereumPmMetaData, string jwtUsername);
         Task AddAdminUserToPackage(string packageName, string username, string jwtUsername);
         Task UpdateDeprecateValueInPackage(string packageName, string jwtUsername, bool deprecate);
+        Task UnpublishPackage(string packageName, string jwtUsername);
     }
 }

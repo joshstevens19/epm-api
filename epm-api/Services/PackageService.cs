@@ -146,6 +146,8 @@ namespace epm_api.Services
                     {
                         PackageName = packageFiles.PackageName,
                         Version = new List<string> { packageFiles.Version },
+                        Description = ethereumPmMetaData.Description,
+                        Keywords = ethereumPmMetaData.Keywords,
                         Private = ethereumPmMetaData.Private,
                         Team = ethereumPmMetaData.Team,
                         GitHub = ethereumPmMetaData.GitHub,
@@ -161,6 +163,8 @@ namespace epm_api.Services
                     {
                         PackageName = packageFiles.PackageName,
                         Version = new List<string> { packageFiles.Version },
+                        Description = ethereumPmMetaData.Description,
+                        Keywords = ethereumPmMetaData.Keywords,
                         Private = ethereumPmMetaData.Private,
                         Team = ethereumPmMetaData.Team,
                         GitHub = ethereumPmMetaData.GitHub,
@@ -215,6 +219,8 @@ namespace epm_api.Services
                 packageDetails.Version.Add(packageFiles.Version);
                 packageDetails.GitHub = ethereumPmMetaData.GitHub;
                 packageDetails.LatestVersion = packageFiles.Version;
+                packageDetails.Description = ethereumPmMetaData.Description;
+                packageDetails.Keywords = ethereumPmMetaData.Keywords;
 
                 await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
             }
@@ -304,7 +310,7 @@ namespace epm_api.Services
         /// <param name="team"></param>
         /// <returns>bool</returns>
         private async Task<bool> AllowedToUpdatePackageAsync(string team,
-                                                             List<string> adminUsers,
+                                                             IList<string> adminUsers,
                                                              string jwtUsername)
         {
             if (!string.IsNullOrEmpty(team))

@@ -8,7 +8,6 @@ namespace epm_api.Controllers
     public class PingController : BaseApiController
     {
         [HttpGet]
-        [Route(template: "")]
         public IActionResult Get()
         {
             // check s3 is alive maybe!? do not want to do pointless chargable API calls though..

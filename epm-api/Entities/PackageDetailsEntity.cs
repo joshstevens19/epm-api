@@ -20,6 +20,7 @@ namespace epm_api.Entities
         public string GitHub { get; set; }
         public bool Deprecated { get; set; }
         public IList<string> AdminUsers { get; set; }
+        public IList<string> Users { get; set; }
         public IList<string> Keywords { get; set; }
         public DateTime CreatedOn { get; set; }
     }

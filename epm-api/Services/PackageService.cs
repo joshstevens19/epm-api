@@ -103,11 +103,177 @@ namespace epm_api.Services
                     packageDetails.AdminUsers.Add(username);
                 }
 
-                // do nothing as already present in team :)
+                if (!packageDetails.Users.Contains(username))
+                {
+                    packageDetails.Users.Add(username);
+                }
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
             }
             else
             {
                 throw new Exception("Do not have permission to add a admin user to this package");
+            }
+        }
+
+        /// <summary>
+        /// Add a user to a package - normally used for private packages you want to share with friends
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="username">The username</param>
+        /// <param name="jwtUsername">The jwt username</param>
+        /// <returns></returns>
+        public async Task AddUserToPackage(string packageName,
+                                                string username,
+                                                string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(username);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to add memebers to this package");
+
+            if (packageDetails.AdminUsers.Contains(jwtUsername))
+            {
+                if (!packageDetails.Users.Contains(username))
+                {
+                    packageDetails.Users.Add(username);
+                }
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+            }
+            else
+            {
+                throw new Exception("Do not have permission to add a user to this package");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="username">The username</param>
+        /// <param name="jwtUsername">The jwt username</param>
+        /// <returns></returns>
+        public async Task RemoveUserFromPackage(string packageName,
+                                                string username,
+                                                string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(username);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to add memebers to this package");
+
+            if (packageDetails.Owner == username)
+                throw new Exception("Can not remove owner from package, please transfer the owner first");
+
+            if (packageDetails.AdminUsers.Contains(jwtUsername))
+            {
+                packageDetails.AdminUsers = packageDetails.AdminUsers.Where(a => a != username).ToList();
+                packageDetails.Users = packageDetails.Users.Where(a => a != username).ToList();
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+            }
+            else
+            {
+                throw new Exception("Do not have permission to add a user to this package");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="username">The username</param>
+        /// <param name="jwtUsername">The jwt username</param>
+        /// <returns></returns>
+        public async Task RemoveAdminPermissonFromUserForPackage(string packageName,
+                                                string username,
+                                                string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(username);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to add memebers to this package");
+
+            if (packageDetails.Owner == username)
+                throw new Exception("Can not remove owner from package, please transfer the owner first");
+
+            if (packageDetails.AdminUsers.Contains(jwtUsername))
+            {
+                packageDetails.AdminUsers = packageDetails.AdminUsers.Where(a => a != username).ToList();
+            
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+            }
+            else
+            {
+                throw new Exception("Do not have permission to add a user to this package");
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packageName">The package name</param>
+        /// <param name="username">The username</param>
+        /// <param name="jwtUsername">The jwt username</param>
+        /// <returns></returns>
+        public async Task TransferPackageOwner(string packageName,
+                                                string username,
+                                                string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(username);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to add memebers to this package");
+
+            if (packageDetails.Owner == username)
+                throw new Exception("Already owner of this project");
+
+            if (packageDetails.Owner == jwtUsername)
+            {
+                packageDetails.Owner = username;
+
+                await this._dynamoDbService.PutItemAsync<PackageDetailsEntity>(packageDetails);
+            }
+            else
+            {
+                throw new Exception("Do not have permission to add a user to this package");
             }
         }
 
@@ -172,6 +338,7 @@ namespace epm_api.Services
                         LatestVersion = packageFiles.Version,
                         Deprecated = false,
                         AdminUsers = new List<string> { jwtUsername },
+                        Users = new List<string> { jwtUsername },
                         CreatedOn = DateTime.UtcNow
                     };
                 }
@@ -277,9 +444,9 @@ namespace epm_api.Services
                 user.Packages = user.Packages.Where(p => p != packageName).ToList();
                 await this._dynamoDbService.PutItemAsync<UsersEntity>(user);
             }
-
-
         }
+
+
 
         /// <summary>
         /// 
@@ -364,7 +531,7 @@ namespace epm_api.Services
                 // it is a normal user who owns the package
                 else
                 {
-                    if (!packageDetails.AdminUsers.Contains(jwtUsername))
+                    if (!packageDetails.Users.Contains(jwtUsername))
                         throw new Exception("You are not allowed to install this package");
                 }
             }

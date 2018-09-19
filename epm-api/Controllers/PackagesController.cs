@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using epm_api.Common;
 using epm_api.Dtos.EpmPackages;
 using epm_api.Models;
+using epm_api.Packages.Dtos.EpmPackages;
 using epm_api.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -130,7 +131,6 @@ namespace epm_api.Controllers
 
         [HttpPost]
         [Authorize]
-        [Route(template: "")]
         public async Task<IActionResult> Post([FromBody] UploadPackageRequestDto uploadPackageRequestDto)
         {
             IList<PackageFile> files = uploadPackageRequestDto.PackageFiles
@@ -162,9 +162,11 @@ namespace epm_api.Controllers
 
             EthereumPmMetaData metaData = new EthereumPmMetaData()
             {
+                Description = (string)ethereumPmJson["description"],
                 GitHub = (string)ethereumPmJson["github"],
                 Private = (bool?)ethereumPmJson["private"] ?? false,
-                Team = (string)ethereumPmJson["team"]
+                Team = (string)ethereumPmJson["team"],
+                Keywords = (IList<string>)ethereumPmJson["keywords"]
             };
 
             PackageFiles packageFiles = new PackageFiles

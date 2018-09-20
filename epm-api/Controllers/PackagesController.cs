@@ -129,6 +129,74 @@ namespace epm_api.Controllers
             return this.Ok();
         }
 
+        [HttpDelete]
+        [Authorize]
+        [Route(template: "admin")]
+        public async Task<IActionResult> Delete([FromBody] RemoveAdminToPackageRequestDto removeAdminToPackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._packageService.RemoveAdminPermissonFromUserForPackage(removeAdminToPackageRequestDto.PackageName,
+                                                                              removeAdminToPackageRequestDto.Username,
+                                                                              unpackedJwt.Username);
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [Route(template: "user")]
+        public async Task<IActionResult> Post([FromBody] AddUserToPackageRequestDto addUserToPackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._packageService.AddUserToPackage(addUserToPackageRequestDto.PackageName,
+                                                        addUserToPackageRequestDto.Username,
+                                                        unpackedJwt.Username);
+
+            return this.Ok();
+        }
+
+        [HttpDelete]
+        [Authorize]
+        [Route(template: "user")]
+        public async Task<IActionResult> Delete([FromBody] RemoveUserToPackageRequestDto removeUserToPackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._packageService.AddUserToPackage(removeUserToPackageRequestDto.PackageName,
+                                                        removeUserToPackageRequestDto.Username,
+                                                        unpackedJwt.Username);
+
+            return this.Ok();
+        }
+
+        [HttpPost]
+        [Authorize]
+        [Route(template: "transfer")]
+        public async Task<IActionResult> Post([FromBody] TransferOwnershipOfPackageRequestDto transferOwnershipOfPackageRequestDto)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            await this._packageService.TransferPackageOwner(transferOwnershipOfPackageRequestDto.PackageName,
+                                                            transferOwnershipOfPackageRequestDto.Username,
+                                                            unpackedJwt.Username);
+
+            return this.Ok();
+        }
+
+        [HttpGet]
+        [Authorize]
+        [Route(template: "admin/{packageName}")]
+        public async Task<IActionResult> GetAdminUsers([FromRoute] string packageName)
+        {
+            UnpackedJwt unpackedJwt = this._jwtService.UnpackJwtClaimsToProfile(User.Claims.ToList());
+
+            IReadOnlyList<string> adminUsers = await this._packageService.GetAdminUsers(packageName, unpackedJwt.Username);
+
+            return this.Ok(new { users = adminUsers });
+        }
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Post([FromBody] UploadPackageRequestDto uploadPackageRequestDto)

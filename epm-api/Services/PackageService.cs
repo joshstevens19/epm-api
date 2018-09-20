@@ -260,7 +260,7 @@ namespace epm_api.Services
                 throw new Exception("No package found");
 
             if (!string.IsNullOrEmpty(packageDetails.Team))
-                throw new Exception("Please use the teams API method to add memebers to this package");
+                throw new Exception("Please use the teams API method to transfer ownership for this package");
 
             if (packageDetails.Owner == username)
                 throw new Exception("Already owner of this project");
@@ -275,6 +275,36 @@ namespace epm_api.Services
             {
                 throw new Exception("Do not have permission to add a user to this package");
             }
+        }
+
+        /// <summary>
+        /// Returns the list of admin users
+        /// </summary>
+        /// <param name="packageName"></param>
+        /// <param name="username"></param>
+        /// <param name="jwtUsername"></param>
+        /// <returns></returns>
+        public async Task<IReadOnlyList<string>> GetAdminUsers(string packageName,
+                                                               string jwtUsername)
+        {
+            UsersEntity userEntity = await this._dynamoDbService.GetItemAsync<UsersEntity>(jwtUsername);
+
+            if (userEntity == null)
+                throw new Exception("This user does not exist");
+
+            PackageDetailsEntity packageDetails =
+                await this._dynamoDbService.GetItemAsync<PackageDetailsEntity>(packageName);
+
+            if (packageDetails == null)
+                throw new Exception("No package found");
+
+            if (!string.IsNullOrEmpty(packageDetails.Team))
+                throw new Exception("Please use the teams API method to get list of admin memebers");
+
+            if (!packageDetails.AdminUsers.Contains(jwtUsername))
+                throw new Exception("You are not allowed to get a list of all admin users");
+
+            return (IReadOnlyList<string>)packageDetails.AdminUsers;
         }
 
         /// <summary>

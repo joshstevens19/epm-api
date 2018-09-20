@@ -15,5 +15,6 @@ namespace epm_api.Services.Interfaces
         Task TransferPackageOwner(string packageName, string username, string jwtUsername);
         Task UpdateDeprecateValueInPackage(string packageName, string jwtUsername, bool deprecate);
         Task UnpublishPackage(string packageName, string jwtUsername);
+        Task<IReadOnlyList<string>> GetAdminUsers(string packageName, string jwtUsername);
     }
 }
